@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDb = require("./config/db");
-
+const routes= require("./routers.routes")
 dotenv.config();
 
 const app = express();
@@ -23,10 +23,10 @@ app.use(
 
 app.use(express.json());
 
-app.use("/api/auth", require("./routes/authRoutes"));
-// app.use("/api/product", require("./routes/productRoutes"));
+app.use(routes);
 
-const PORT = process.env.PORT || 3000;
+
+const PORT = process.env.PORT || 4000;
 
 connectDb().then(() => {
   app.listen(PORT, () => {
