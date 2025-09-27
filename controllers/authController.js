@@ -7,8 +7,17 @@ const getTokenFromRequest = require("../utils/getToken");
 const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password} = req.body;
-    if (!firstName || !lastName || !email || !password) {
-      return response(res, false, "All fields are required");
+    if (!firstName ) {
+      return response(res, false, "firstName are required");
+    }
+    if (!lastName ) {
+      return response(res, false, "lastName are required");
+    }
+    if (!email ) {
+      return response(res, false, "email are required");
+    }
+    if (!password ) {
+      return response(res, false, "password are required");
     }
 
     const existingUser = await User.findOne({ email });
@@ -33,7 +42,8 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return response(res, false, "Email and password required");
+    if (!email) return response(res, false, "Email is required");
+    if (!password) return response(res, false, "password is required");
 
     const user = await User.findOne({ email });
     if (!user) return response(res, false, "User not found");
@@ -71,13 +81,5 @@ const logout = async (req, res) => {
     return response(res, false, error.message);
   }
 }
-const getall = async(req,res)=>{
-  try {
-    const data =await User.find()
-    return response (res,true,"Logged out successfully",data);
-  } catch (error) {
-    return response (res,false,error.message);
 
-  }
-}
-module.exports = { register, login, logout,getall};
+module.exports = { register, login, logout};
