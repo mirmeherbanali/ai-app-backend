@@ -70,6 +70,14 @@ const logout = async (req, res) => {
   } catch (error) {
     return response(res, false, error.message);
   }
-};
+}
+const getall = async(req,res)=>{
+  try {
+    const data =await User.find()
+    return response (res,true,"Logged out successfully",data);
+  } catch (error) {
+    return response (res,false,error.message);
 
-module.exports = { register, login, logout };
+  }
+}
+module.exports = { register, login, logout,getall};
