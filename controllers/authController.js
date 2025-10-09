@@ -3,24 +3,41 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { response } = require("../common/response/response");
 const getTokenFromRequest = require("../utils/getToken");
-
+const Admin = require("../models/AdminUser");
 const register = async (req, res) => {
   try {
-    const { userType,firstName, lastName,companyName,companyEmail,companyWebsite,email, password} = req.body;
-    if (!userType ) {
-      return response(res, false, "UuserType required");
+    const {
+      userType,
+      firstName,
+      lastName,
+      companyName,
+      companyEmail,
+      companyWebsite,
+      email,
+      password,
+    } = req.body;
+
+    if (!userType) {
+      return response(res, false, "userType is required");
     }
-  if(userType === "Reviewer"){
-    const existingUser = await User.findOne({ email });
+
+    const Model = userType === "Admin" ? Admin : User;
+    let existingUser;
+    if (userType === "Reviewer") {
+      existingUser = await Model.findOne({ email });
+    } else if (userType === "Developer") {
+      existingUser = await Model.findOne({ companyEmail });
+    } else if (userType === "Admin") {
+      existingUser = await Model.findOne({ email });
+    }
+
     if (existingUser) return response(res, false, "User already exists");
-  }
-  if(userType === "Developer"){
-    const existingUser = await User.findOne({ companyEmail });
-    if (existingUser) return response(res, false, "User already exists");
-  }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new User({
+    // Create new user
+    const newUser = new Model({
       userType,
       firstName,
       lastName,
@@ -28,45 +45,60 @@ const register = async (req, res) => {
       companyName,
       companyEmail,
       companyWebsite,
+      status: "Active",
       password: hashedPassword,
     });
 
-    await user.save();
-    return response(res, true, "User registered successfully", user.toJSON());
+    await newUser.save();
+
+    return response(res, true, "User registered successfully", newUser.toJSON());
   } catch (error) {
     return response(res, false, error.message);
   }
 };
 
- const login = async (req, res) => { 
+const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     if (!email) return response(res, false, "Email is required");
     if (!password) return response(res, false, "Password is required");
 
-    const user = await User.findOne({
-      $or: [{ email: email }, { companyEmail: email }]
+    let user = await User.findOne({
+      $or: [{ email: email }, { companyEmail: email }],
     });
 
-    if (!user) return response(res, false, "User not found");
+    let isAdminLogin = false;
+    if (!user) {
+      const admin = await Admin.findOne({ email: email });
+      if (!admin) return response(res, false, "User not found");
+
+      if (admin.status !== "Active")
+        return response(res, false, "Admin is not active");
+
+      user = admin;
+      isAdminLogin = true;
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return response(res, false, "Invalid credentials");
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: "1d" });
+    const token = jwt.sign({ id: user._id, isAdmin: isAdminLogin }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "1d",
+    });
     const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
     user.token = token;
     user.tokenExpiry = tokenExpiry;
     await user.save();
 
-    return response(res, true, "Login successful", { token, user: user.toJSON() });
+    return response(res, true, "Login successful", {
+      token,
+      user: user.toJSON(),
+      isAdmin: isAdminLogin,
+    });
   } catch (error) {
     return response(res, false, error.message);
   }
 };
-
-
 const logout = async (req, res) => {
   try {
     const token = getTokenFromRequest(req);
@@ -83,6 +115,6 @@ const logout = async (req, res) => {
   } catch (error) {
     return response(res, false, error.message);
   }
-}
+};
 
-module.exports = { register, login, logout};
+module.exports = { register, login, logout };
