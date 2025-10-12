@@ -3,6 +3,30 @@ const User = require("../models/User");
 const { response } = require("../common/response/response");
 const Admin = require("../models/AdminUser")
 
+const getAllUsers = async (req, res) => {
+  try {
+    const { userType } = req.body; 
+
+    let filter = {};
+    if (userType) {
+      filter.userType = userType;
+    }
+
+    const users = await User.find(filter)
+      .select("-password -token -tokenExpiry") 
+      .sort({ createdAt: -1 }); 
+
+    if (!users.length) {
+      return response(res, false, "No users found");
+    }
+
+    return response(res, true, "Users fetched successfully", users);
+  } catch (error) {
+    console.error(error);
+    return response(res, false, error.message);
+  }
+};
+
 const getUserById = async (req, res) => {
   try {
     const { id } = req.body;
@@ -97,4 +121,4 @@ const deleteUser = async (req, res) => {
 };
 
 
-module.exports = {  getUserById, updateUser,deleteUser };
+module.exports = {  getAllUsers,getUserById, updateUser,deleteUser };

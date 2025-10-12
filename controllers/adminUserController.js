@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const Admin = require("../models/AdminUser"); 
+const User= require("../models/User")
 const { response } = require("../common/response/response");
 
 const addAdminUser = async (req, res) => {
@@ -20,7 +21,7 @@ const addAdminUser = async (req, res) => {
     }
 
     if (adminId) {
-      const user = await Admin.findById(adminId);
+      const user = await User.findById(adminId);
       if (!user || user.userType !== "Admin") {
         return response(res, false, "adminId must belong to a User with userType 'Admin'");
       }

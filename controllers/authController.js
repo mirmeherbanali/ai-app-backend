@@ -4,6 +4,54 @@ const User = require("../models/User");
 const { response } = require("../common/response/response");
 const getTokenFromRequest = require("../utils/getToken");
 const Admin = require("../models/AdminUser");
+// const register = async (req, res) => {
+//   try {
+//     const {
+//       userType,
+//       firstName,
+//       lastName,
+//       companyName,
+//       companyEmail,
+//       companyWebsite,
+//       email,
+//       password,
+//     } = req.body;
+
+//     if (!userType) {
+//       return response(res, false, "userType is required");
+//     }
+
+//     const Model = userType === "Admin" ? Admin : User;
+//     let existingUser;
+//     if (userType === "Reviewer") {
+//       existingUser = await Model.findOne({ email });
+//     } else if (userType === "Developer") {
+//       existingUser = await Model.findOne({ companyEmail });
+//     } else if (userType === "Admin") {
+//       existingUser = await Model.findOne({ email });
+//     }
+
+//     if (existingUser) return response(res, false, "User already exists");
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     const newUser = new Model({
+//       userType,
+//       firstName,
+//       lastName,
+//       email,
+//       companyName,
+//       companyEmail,
+//       companyWebsite,
+//       status: "Active",
+//       password: hashedPassword,
+//     });
+
+//     await newUser.save();
+
+//     return response(res, true, "User registered successfully", newUser.toJSON());
+//   } catch (error) {
+//     return response(res, false, error.message);
+//   }
+// };
 const register = async (req, res) => {
   try {
     const {
@@ -21,19 +69,22 @@ const register = async (req, res) => {
       return response(res, false, "userType is required");
     }
 
-    const Model = userType === "Admin" ? Admin : User;
     let existingUser;
+
     if (userType === "Reviewer") {
-      existingUser = await Model.findOne({ email });
+      existingUser = await User.findOne({ email });
     } else if (userType === "Developer") {
-      existingUser = await Model.findOne({ companyEmail });
+      existingUser = await User.findOne({ companyEmail });
     } else if (userType === "Admin") {
-      existingUser = await Model.findOne({ email });
+      existingUser = await User.findOne({ email });
     }
 
-    if (existingUser) return response(res, false, "User already exists");
+    if (existingUser) {
+      return response(res, false, "User already exists");
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Model({
+
+    const newUser = new User({
       userType,
       firstName,
       lastName,
@@ -49,6 +100,7 @@ const register = async (req, res) => {
 
     return response(res, true, "User registered successfully", newUser.toJSON());
   } catch (error) {
+    console.error(error);
     return response(res, false, error.message);
   }
 };
