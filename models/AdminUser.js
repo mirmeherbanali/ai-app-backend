@@ -6,9 +6,9 @@ const adminUserSchema = new mongoose.Schema(
     lastName: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
-    userType: { type: String, enum: ["Admin"], default: "Admin" },
-    status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", default: null },
+    userType: { type: String, enum: ["AdminUser"], default: "AdminUser" },
+    status: { type: String, enum: ["Active", "Inactive","Deleted"], default: "Active" },
   },
   { timestamps: true }
 );

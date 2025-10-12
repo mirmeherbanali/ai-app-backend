@@ -1,8 +1,7 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const { response } = require("../common/response/response");
-
-
+const Admin = require("../models/AdminUser")
 
 const getUserById = async (req, res) => {
   try {
@@ -11,9 +10,17 @@ const getUserById = async (req, res) => {
     if (!id) return response(res, false, "User ID is required");
 
     const user = await User.findById(id);
-    if (!user) return response(res, false, "User not found");
+    const admin = await Admin.findById(id);
 
-    return response(res, true, "User fetched successfully", user.toJSON());
+    if (!user && !admin) {
+      return response(res, false, "User not found");
+    }
+
+    const result = {};
+    if (user) result.user = user.toJSON();
+    if (admin) result.admin = admin.toJSON();
+
+    return response(res, true, "Data fetched successfully", result);
   } catch (error) {
     return response(res, false, error.message);
   }
@@ -64,6 +71,30 @@ const updateUser = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    const { userId, adminId } = req.body;
+
+    if (!userId) return response(res, false, "User ID is required");
+    if (!adminId) return response(res, false, "Admin ID is required");
 
 
-module.exports = {  getUserById, updateUser };
+    const admin = await Admin.findOne({ _id: adminId, status: "Active", userType: "Admin" });
+    if (!admin) return response(res, false, "Admin not found, inactive, or not authorized");
+
+
+    const user = await User.findById(userId);
+    if (!user) return response(res, false, "User not found");
+
+  
+    user.status = "Deleted"; 
+    await user.save();
+
+    return response(res, true, "User deleted successfully", user);
+  } catch (error) {
+    return response(res, false, error.message);
+  }
+};
+
+
+module.exports = {  getUserById, updateUser,deleteUser };
